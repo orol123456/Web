@@ -1,0 +1,18 @@
+doctype html
+html
+    head
+        meta(charset='utf-8')
+    body
+        h1 Welcom to handmade dictionary :)
+        a(href='/new') Click here to add my dictionary !!
+        hr
+        ul 
+        h3 dictionary list
+            each topic in topics
+                li
+                    a(href='/'+topic)= topic
+        article
+            b= title
+            br
+            =description
+        hr
