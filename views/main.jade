@@ -10,9 +10,27 @@ html
         h3 dictionary list
             each topic in topics
                 li
-                    a(href='/'+topic)= topic
+                    a(href='/'+topic.id)= topic.title
         article
-            b= title
-            br
-            =description
-        hr
+            if topic
+                h2= topic.title
+                = topic.description
+                br
+                = '-by '+ topic.author+'-'
+                br
+                hr
+                a(href=topic.id+'/edit') edit
+                |  
+                a(href=topic.id+'/delete') delete
+                hr
+                
+            else 
+                hr
+                h2 Welcome
+                | <b>this is my handmade dictionary!!<br></b>
+                | <b>if you want add new thigs, then click 'click here to add my dictionary'<br> 
+                | <b>this menu is located in top of this webpage <br>
+                | <b>when you delete or edit something, then click a title in dic_list!!
+                hr
+
+            

@@ -25,56 +25,112 @@ app.listen(port,()=>{
     console.log(`app listening at http://localhost:${port} :)`)    
 })
 
-
-//메인 화면(main.jade로 rendering)
-app.get('/',function(req,res){
-    fs.readdir('data',function(err,files){
-        if(err){
-            console.log(err)
-            res.status(500).send('Internal Server Error')
-        }
-        res.render('main', {topics:files})
-    })
+var mysql= require('mysql')
+var conn= mysql.createConnection({
+    host:'localhost',
+    user:'root',
+    password:'123456',
+    database:'o2'
 })
-//메인화면에서 add클릭 시 입력 form(add_new.jade)로 rendering
+conn.connect()
+
+//새로운 내용추가
 app.get('/new',function(req,res){
     res.render('add_new')
 })
-
-
-//입력받은 title, 해당 title을 통해 읽은 파일들을 data에 담아 file목록이 담긴 topics와 함께
-//main.jade에 전달한다
-app.get('/:id',function(req,res){
-    var id= req.params.id
-    fs.readdir('data',function(err,files){
-        if(err){
-            console.log('error')
+//id title description author(id는 자동인덱싱)
+//메인 화면(main.jade로 rendering)
+app.get(['/','/:id'],function(req,res){
+    var sql='select id,title from topic'
+    conn.query(sql,function(err,topics,fields){
+        var id=req.params.id
+        if(id){
+            var sql = 'select * from topic where id=?'
+            conn.query(sql,id,function(err,topic,fields){
+                if(err){
+                    console.log(err)
+                }
+                else{
+                    res.render('main',{topics:topics,topic:topic[0]})
+                }
+            })
         }
-    fs.readFile('data/'+id,'utf8',function(err,data){
+        else{
+            res.render('main',{topics:topics})
+        }
+    })
+})
+
+app.get('/:id/edit',function(req,res){
+    var id=req.params.id
+    var sql='select * from topic where id=?'
+    conn.query(sql,id,function(err,topic,fields){
         if(err){
             console.log(err)
         }
-        res.render('main',{description:data,topics:files,title:id})
+        else{
+            res.render('edit',{topic:topic[0]})
+        }
     })
 })
-
-})
-
 //post형식으로 입력받은 데이터를 data폴더에 제목은 title,내용은 description으로 저장하고,
 //성공시 main화면으로 돌아가는 버튼을 만들어준다
-app.post('/',function(req,res){
+app.post('/new',function(req,res){
     var title=req.body.title
     var description=req.body.description
-    fs.writeFile('data/'+title,description,(err)=>{
-        if(err) {
-            console.log('error !!')
-            res.status(500).send('server error')
+    var author=req.body.author
+    console.log(title,description,author)
+    var sql='INSERT INTO topic (title,description,author) values(?,?,?)'
+    conn.query(sql,[title,description,author],function(err,result,fields){
+        if(err){
+            res.status(500).send('Internal server erswror')
         }
-        res.send(`save success!!<br><br>
-        <a href='/'><b>go to main<b></a>`)
+        else{
+            res.redirect('/'+result.insertId)
+        }
+
     })
-    
-})
+    })
+    app.get('/:id/delete',function(req,res){
+        var id=req.params.id
+        var sql='delete from topic where id=?'
+        conn.query(sql,id,function(err,topic,fields){
+            if(err){
+                console.log(err)
+            }
+            else{
+                
+                res.redirect('/')
+            }
+        })
+    })
+    app.post('/:id/delete',function(req,res){
+        var id=req.params.id
+        var sql='delete from topic where id=?'
+        conn.query(sql,id,function(err,topic,fields){
+            if(err){
+                console.log(err)
+            }
+            else{
+                res.send('a')
+            }
+        })
+    })
+    app.post('/:id/edit',function(req,res){
+        var title=req.body.title
+        var description=req.body.description
+        var author=req.body.author
+        var sql='update topic set title=?, description=?, author=? where id=?'
+        var id =req.params.id
+        conn.query(sql,[title,description,author,id],function(err,topic,fields){
+            if(err){
+                console.log(err)
+            }
+            else{
+                res.redirect('/'+id)
+            }
+        })
+    })
 
 
 
